@@ -11,3 +11,8 @@
 *.lai
 *.la
 *.a
+
+# External Project
+openzwave
+
+out
