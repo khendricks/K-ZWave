@@ -17,10 +17,15 @@ ExternalProject_add(openzwave_build
 	BINARY_DIR ${CMAKE_SOURCE_DIR}/openzwave/src/openzwave_build
 	SVN_REPOSITORY http://open-zwave.googlecode.com/svn/trunk/ 
 	BUILD_COMMAND $(MAKE) -C cpp/build/linux
-	#BUILD_COMMAND make -C cpp/build/linux -j10
 	CONFIGURE_COMMAND echo
 	INSTALL_COMMAND echo
+	STEP_TARGETS openzwave
 	)
+
+add_custom_target(openzwave
+	COMMAND cp -r ${CMAKE_SOURCE_DIR}/openzwave/src/openzwave_build/config .)
+
+add_dependencies(openzwave openzwave_build)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x") 
 
@@ -50,7 +55,8 @@ target_link_libraries(zwaved
 	boost_system
 	boost_thread)
 
-add_dependencies(zwaved pch_KZWave)
+add_dependencies(pch_KZWave openzwave)
+add_dependencies(zwaved pch_KZWave openzwave)
 
 #add_custom_target(openzwave
 #	COMMAND cp ${MOEBIUS_INSTALL_DIR}/lib/* ${DIR_OBJECT}
