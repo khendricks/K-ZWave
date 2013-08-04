@@ -1,5 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
 include(ExternalProject)
+include(${CMAKE_SOURCE_DIR}/cmake/pch.cmake)
 
 PROJECT(kjh-zwave)
 
@@ -26,15 +28,20 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x")
 file(GLOB CoreSource Core/*.cpp)
 file(GLOB CoreHeaders Core/*.h Core/*.hpp)
 
+list(APPEND AllKZWaveFiles ${CoreSource})
+list(APPEND AllKZWaveFiles ${CoreHeaders})
+list(APPEND AllKZWaveFiles Main.cpp)
+list(APPEND AllKZWaveFiles KZWave.h)
+
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${OPENZWAVE_DIR}/src)
 include_directories(${OPENZWAVE_DIR}/src/command_classes)
 include_directories(${OPENZWAVE_DIR}/src/value_classes)
 include_directories(${OPENZWAVE_DIR}/src/platform)
 include_directories(${OPENZWAVE_DIR}/tinyxml)
-add_executable(zwaved
-	${CoreSource}
-	Main.cpp)
+add_executable(zwaved ${AllKZWaveFiles})
+
+precompiled_header("${AllKZWaveFiles}" pch_KZWave KZWave "")
 
 target_link_libraries(zwaved
 	${OPENZWAVE_DIR}/lib/linux/libopenzwave.a
@@ -42,6 +49,8 @@ target_link_libraries(zwaved
 	udev
 	boost_system
 	boost_thread)
+
+add_dependencies(zwaved pch_KZWave)
 
 #add_custom_target(openzwave
 #	COMMAND cp ${MOEBIUS_INSTALL_DIR}/lib/* ${DIR_OBJECT}
