@@ -1,6 +1,7 @@
 // STL
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 // Unix
 #include <unistd.h>
@@ -25,6 +26,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 #define foreach BOOST_FOREACH
 
