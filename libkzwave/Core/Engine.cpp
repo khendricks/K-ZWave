@@ -1,4 +1,4 @@
-#include "KZWave.h"
+#include "kzwave.h"
 
 using namespace OpenZWave;
 
@@ -43,27 +43,6 @@ void Engine::Initialize()
 	// Wait for the driver to become initialized
 	boost::unique_lock<boost::mutex> lock(m_initMutex);
 	m_initCond.wait(lock);
-
-	//for(auto &nodeInfo : m_nodes)
-	//{
-	//	boost::lock_guard<boost::mutex> lock(m_mutex);
-	//	if(nodeInfo->m_nodeId == 2)
-	//	{
-	//		for(auto value : nodeInfo->m_values)
-	//		{
-	//			if(value.GetType() == ValueID::ValueType_Bool)
-	//			{
-	//				bool s;
-	//				Manager::Get()->GetValueAsBool(value, &s);
-	//				std::cout << s << std::endl;
-	//				std::cout << !s << std::endl;
-	//				Manager::Get()->SetValue(value, !s);
-	//				//Manager::Get()->SetNodeName(g_homeId, nodeInfo->m_nodeId, "LIVING_LIGHT");
-	//				//Manager::Get()->SetNodeLocation(g_homeId, nodeInfo->m_nodeId, "LivingRoom");
-	//			}
-	//		}
-	//	}
-	//}
 }
 
 void Engine::Deinitialize()
@@ -73,24 +52,9 @@ void Engine::Deinitialize()
 	Options::Destroy();
 }
 
-list<Engine::NodeObject> Engine::GetNodes()
+set<Engine::NodeInfoPtr> Engine::GetNodes()
 {
-	boost::lock_guard<boost::mutex> lock(m_mutex);
-
-	list<Engine::NodeObject> nodes;
-
-	foreach(auto &nodeInfo, m_nodes)
-	{
-		NodeObject node;
-		node.homeId = nodeInfo->m_homeId;
-		node.nodeId = nodeInfo->m_nodeId;
-		node.name = nodeInfo->m_name;
-		node.location = nodeInfo->m_location;
-
-		nodes.push_back(std::move(node));
-	}
-
-	return nodes;
+	return m_nodes;
 }
 
 void Engine::Toggle(uint8_t nodeId)
@@ -128,11 +92,16 @@ void Engine::AllOff()
 	Manager::Get()->SwitchAllOff(m_homeId);
 }
 
+void Engine::SetValueChangedCallback(ValueChanged callback)
+{
+	m_valueChangedCallback = callback;
+}
+
 Engine::NodeInfoPtr Engine::GetNodeInfo(Notification const* notification)
 {
    uint32 const homeId = notification->GetHomeId();
    uint8 const nodeId = notification->GetNodeId();
-   //for( list<NodeInfo*>::iterator it = g_nodes.begin(); it != g_nodes.end(); ++it )
+
    foreach(auto nodeInfo, m_nodes)
    {
       if( ( nodeInfo->m_homeId == homeId ) && ( nodeInfo->m_nodeId == nodeId ) )
@@ -178,7 +147,7 @@ void Engine::OnNotification(const Notification *notification)
 		case Notification::Type_ValueChanged:
 
 			// One of the node values has changed
-         if( auto nodeInfo = GetNodeInfo( notification ) )
+         if(auto nodeInfo = GetNodeInfo(notification))
          {
 				auto vid = notification->GetValueID();
 				auto name = Manager::Get()->GetNodeName(nodeInfo->m_homeId, nodeInfo->m_nodeId);
@@ -189,7 +158,8 @@ void Engine::OnNotification(const Notification *notification)
 				Manager::Get()->GetValueAsString(vid, &i);
 				std::cout << "Value changed" << fullName << " " << Manager::Get()->GetValueLabel(vid) << ":" << i << std::endl;
 
-            nodeInfo = nodeInfo;    // placeholder for real action
+				if(m_valueChangedCallback)
+					m_valueChangedCallback(nodeInfo, vid);
          }
 			break;
 		case Notification::Type_Group:

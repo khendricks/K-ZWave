@@ -1,19 +1,38 @@
-#include "KZWave.h"
+#include "kzwave.h"
 
 using namespace OpenZWave;
 
 int main(int argc, char *argv[])
 {
+	//Py_Initialize();
+	//auto moduleName = PyString_FromString("/home/generallee5686/K-ZWave/Rules/switch_state_email.py");
+
+	//if(!moduleName)
+	//{
+	//	PyErr_Print();
+	//	exit(0);
+	//}
+
+	//auto module = PyImport_Import(moduleName);
+
+	//if(!module)
+	//{
+	//	PyErr_Print();
+	//	exit(0);
+	//}
+
+	//Py_Finalize();
+
 	KZWave::Engine engine("/dev/ttyUSB0");
 	engine.Initialize();
 
-	map<uint8_t, KZWave::Engine::NodeObject> nodes;
+	map<uint8_t, KZWave::Engine::NodeInfoPtr> nodes;
 
 	auto list = engine.GetNodes();
 
 	foreach(auto &node, list)
 	{
-		auto id = node.nodeId;
+		auto id = node->m_nodeId;
 		nodes.insert(make_pair(id, std::move(node)));
 	}
 	
@@ -32,9 +51,9 @@ int main(int argc, char *argv[])
 			{
 				foreach(auto &node, nodes)
 				{
-					std::cout << static_cast<int>(node.second.nodeId) << ") ";
-					std::cout << "[" << node.second.GetType() << "] ";
-					std::cout << "(" <<  node.second.location << ") -- " << node.second.name << std::endl;
+					std::cout << static_cast<int>(node.second->m_nodeId) << ") ";
+					std::cout << "[" << node.second->GetType() << "] ";
+					std::cout << "(" <<  node.second->m_location << ") -- " << node.second->m_name << std::endl;
 				}
 			}
 			else if(boost::starts_with(line, "toggle "))
@@ -74,7 +93,7 @@ int main(int argc, char *argv[])
 				if(node == nodes.end())
 					cout << "Invalid node id" << endl;
 
-				node->second.SetName(split[2]);
+				node->second->SetName(split[2]);
 			}
 			else if(boost::starts_with(line, "setlocation "))
 			{
@@ -94,7 +113,7 @@ int main(int argc, char *argv[])
 				if(node == nodes.end())
 					cout << "Invalid node id" << endl;
 
-				node->second.SetLocation(split[2]);
+				node->second->SetLocation(split[2]);
 			}
 
 		}

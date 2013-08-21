@@ -1,3 +1,6 @@
+// Python
+#include <python2.7/Python.h>
+
 // STL
 #include <iostream>
 #include <string>
